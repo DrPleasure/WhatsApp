@@ -33,16 +33,19 @@ chatsRouter.get('/', JWTAuthMiddleware, async (req, res, next) => {
         res.status(200).json(existingChat);
       } else {
         // Create new chat with recipient
-        const newChat = new chatModel({ members: [sender, recipient] });
+        const newChat = new chatModel({
+          members: [sender, recipient],
+          messages: []
+        });
         const savedChat = await newChat.save();
   
         // Join chat room with sockets
         const chatRoom = `chat_${savedChat._id}`;
-        socketio.sockets.in(chatRoom).emit('message', {
+        socketio.Socket.in(chatRoom).emit('message', {
           type: 'info',
           message: 'User joined chat room'
         });
-        socketio.sockets.connected[socket.id].join(chatRoom);
+        socketio.Socket.connected[socketio.id].join(chatRoom);
   
         res.status(201).json(savedChat);
       }
@@ -50,6 +53,9 @@ chatsRouter.get('/', JWTAuthMiddleware, async (req, res, next) => {
       next(error);
     }
   });
+  
+
+
   // GET /chats/:id endpoint to retrieve a specific chat by ID
 chatsRouter.get('/:id', JWTAuthMiddleware, async (req, res, next) => {
     try {
