@@ -51,6 +51,22 @@ usersRouter.get("/me", JWTAuthMiddleware, async (req, res, next) => {
   }
 });
 
+usersRouter.get("/:userId", async (req, res, next) => {
+  try {
+    const user = await userModel.findById(req.params.userId);
+    if (user) {
+      res.status(200).json(user);
+    } else {
+      next(
+        createHttpError(404, `user with id ${req.params.userId} does not exist!`)
+      );
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+
 usersRouter.put("/me", JWTAuthMiddleware, async (req, res, next) => {
   try {
     const updatedUser = await userModel.findByIdAndUpdate(

@@ -9,6 +9,8 @@ import {
 } from "./errorHandlers.js";
 
 import usersRouter from "./api/users/index.js";
+import chatsRouter from "./api/chats/index.js";
+import messagesRouter from "./api/messages/index.js";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 
@@ -20,6 +22,8 @@ server.use(cors());
 server.use(express.json());
 
 server.use("/users", usersRouter);
+server.use("/chats", chatsRouter);
+server.use("/messages", messagesRouter);
 
 server.use(badRequestHandler);
 server.use(unauthorizedHandler);
