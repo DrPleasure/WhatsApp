@@ -6,7 +6,7 @@ const messageSchema = new Schema(
   {
     sender: 
     {
-        type: mongoose.Schema.Types.ObjectId,
+        type: mongoose.Types.ObjectId,
     ref: 'User'
 },
     content: { 
