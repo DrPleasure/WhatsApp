@@ -85,6 +85,52 @@ messagesRouter.post('/:chatId', JWTAuthMiddleware, async (req, res, next) => {
     }
   });
   
+  // GET /messages/:id endpoint to retrieve a specific message by ID
+  messagesRouter.get('/:chatId/:messageId', JWTAuthMiddleware, async (req, res, next) => {
+    try {
+      const { chatId, messageId } = req.params;
+      const userId = req.user._id;
+    
+      const chat = await chatModel
+        .findById(chatId)
+        .populate('members', '-password')
+        .populate({
+          path: 'messages',
+          match: { _id: messageId },
+          populate: {
+            path: 'sender',
+            model: 'User',
+            select: 'username',
+          },
+        })
+        .exec();
+    
+      // Check if the chat exists
+      if (!chat) {
+        return res.status(404).json({ message: 'Chat not found' });
+      }
+    
+      // Check if the user is a member of the chat
+      const isMember = chat.members.some((member) => member._id.equals(userId));
+      if (!isMember) {
+        return res.status(403).json({ message: 'You are not a member of this chat' });
+      }
+    
+      // Check if the message exists
+      const message = chat.messages.find((msg) => msg._id.equals(messageId));
+      if (!message) {
+        return res.status(404).json({ message: 'Message not found' });
+      }
+    
+      const { sender, content } = message;
+    
+      res.status(200).json({ sender: sender.username, content });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  
 
 // // PUT /messages/:id endpoint to update an existing message
 // messagesRouter.put('/:id', async (req, res, next) => {

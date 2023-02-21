@@ -1,11 +1,13 @@
 import express from "express";
 import createHttpError from "http-errors";
-import { Chat as chatModel } from "./model.js";
 import q2m from "query-to-mongo";
 import { adminOnlyMiddleware } from "../../lib/adminOnly.js";
 import { JWTAuthMiddleware } from "../../lib/jwtAuth.js";
 import { createAccessToken } from "../../lib/tools.js";
 import userModel from "../users/model.js"
+import { Chat } from "./model.js";
+const chatModel = Chat;
+
 
 const chatsRouter = express.Router();
 
@@ -73,26 +75,30 @@ chatsRouter.get('/', JWTAuthMiddleware, async (req, res, next) => {
     try {
       const chat = await chatModel
         .findOne({ _id: req.params.chatId, members: req.user._id })
-        .populate("members")
-        .populate({
-          path: "messages.sender",
-          select: "_id name",
-        })
-        .populate({
-          path: "messages.content",
-          select: "_id text media",
-        });
+        .populate("members")    
+        .populate(
+         "messages"         
+        ).exec()
   
       // Check if the chat exists
       if (!chat) {
         return res.status(404).json({ message: "Chat not found" });
       }
   
+      // Populate the messages field with the sender and content fields
+      
+
+  
       res.json(chat);
     } catch (error) {
       next(error);
     }
   });
+  
+  
+  
+  
+  
   
   
   
