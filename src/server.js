@@ -23,18 +23,29 @@ const port = process.env.PORT || 3001;
 const httpServer = createServer(server);
 const io = new Server(httpServer);
 
-// Attach socketio to the request object for use in routers
-server.use((req, res, next) => {
-  req.io = io;
-  next();
-});
-
 io.on("connection", (socket) => {
   console.log("Socket connected: " + socket.id);
+
+  // Join chat room
+  socket.on("joinChatRoom", (chatId) => {
+    socket.join(chatId);
+    console.log(`Socket ${socket.id} joined room ${chatId}`);
+  });
+
+  // Leave chat room
+  socket.on("leaveChatRoom", (chatId) => {
+    socket.leave(chatId);
+    console.log(`Socket ${socket.id} left room ${chatId}`);
+  });
 });
 
 server.use(cors());
 server.use(express.json());
+
+server.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 
 server.use("/users", usersRouter);
 server.use("/chats", chatsRouter);

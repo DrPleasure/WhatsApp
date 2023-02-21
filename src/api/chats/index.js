@@ -1,6 +1,6 @@
 import express from "express";
 import createHttpError from "http-errors";
-import chatModel from "./model.js";
+import { Chat as chatModel } from "./model.js";
 import q2m from "query-to-mongo";
 import { adminOnlyMiddleware } from "../../lib/adminOnly.js";
 import { JWTAuthMiddleware } from "../../lib/jwtAuth.js";
@@ -71,25 +71,37 @@ chatsRouter.get('/', JWTAuthMiddleware, async (req, res, next) => {
 
 
   // GET /chats/:id endpoint to retrieve a specific chat by ID
-chatsRouter.get('/:id', JWTAuthMiddleware, async (req, res, next) => {
+  chatsRouter.get("/:chatId", JWTAuthMiddleware, async (req, res, next) => {
     try {
-      const chatId = req.params.id;
-      const chat = await chatModel.findById(chatId).exec();
+        const chats = await chatModel.find({ members: req.user._id }).populate('members').populate({
+            path: 'messages.sender',
+            select: '_id name',
+          }).populate({
+            path: 'messages.content',
+            select: '_id text media',
+          });
   
-      if (!chat) {
-        return res.status(404).json({ message: `Chat with ID ${chatId} not found` });
+      // Check if the chat exists
+      if (!chats) {
+        return res.status(404).json({ message: "Chat not found" });
       }
   
-      // Check if authenticated user is a member of the chat
-      if (!chat.members.includes(req.user._id)) {
-        return res.status(401).json({ message: 'You are not a member of this chat' });
+      // Check if the user is a member of the chat
+      const isMember = chats.members.some((member) =>
+        member._id.equals(req.user._id)
+      );
+      if (!isMember) {
+        return res
+          .status(403)
+          .json({ message: "You are not a member of this chat" });
       }
   
-      res.status(200).json(chat);
+      res.json(chats);
     } catch (error) {
       next(error);
     }
   });
+  
   
 
 

@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import messageSchema from "../messages/model.js";
 
 const { Schema, model } = mongoose;
 
@@ -12,12 +11,15 @@ const chatSchema = new Schema(
       }
     ],
     messages: [
-      messageSchema
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Message'
+      }
     ]
   },
   { timestamps: true }
 );
 
+const Chat = model("Chat", chatSchema);
 
-
-export default model("Chat", chatSchema);
+export { Chat };

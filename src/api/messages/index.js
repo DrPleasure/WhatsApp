@@ -1,11 +1,14 @@
 import express from "express";
 import createHttpError from "http-errors";
-import messageSchema from "./model.js";
 import q2m from "query-to-mongo";
 import { adminOnlyMiddleware } from "../../lib/adminOnly.js";
 import { JWTAuthMiddleware } from "../../lib/jwtAuth.js";
 import { createAccessToken } from "../../lib/tools.js";
-import chatModel from "../chats/model.js"
+import { validate } from "../../lib/tools.js";
+import { body } from 'express-validator';
+import jwt from 'jsonwebtoken';
+import  Message  from "./model.js";
+import { Chat as chatModel } from "../chats/model.js";
 
 const messagesRouter = express.Router();
 
@@ -37,26 +40,51 @@ const messagesRouter = express.Router();
 // });
 
 // POST /messages endpoint to create a new message
-messagesRouter.post('/:chatId', async (req, res, next) => {
-  try {
-    
-    const { sender, content } = req.body;
-
-    // Check if sender and content fields are present in request body
-    if (!sender || !content) {
-      return res.status(400).json({ message: 'Sender and content are required fields' });
-    }
-
-    const newMessage = await chatModel.findByIdAndUpdate(
-        req.params.chatId, // WHO
-        { $push: { messages: {sender, content} } }, // HOW
-        { new: true, runValidators: true } // OPTIONS
-      )    
+messagesRouter.post('/:chatId', JWTAuthMiddleware, async (req, res, next) => {
+    try {
+      const { content } = req.body;
+      const sender = req.user._id;
+  
+      // Check if content field is present in request body
+      if (!content) {
+        return res.status(400).json({ message: 'Content is a required field' });
+      }
+  
+      const newMessage = new Message({
+        sender,
+        content,
+      });
+  
+      const chat = await chatModel.findById(req.params.chatId).populate('members');
+  
+      // Check if the chat exists
+      if (!chat) {
+        return res.status(404).json({ message: 'Chat not found' });
+      }
+  
+      // Check if the user is a member of the chat
+      const isMember = chat.members.some((member) => member._id.equals(sender));
+      if (!isMember) {
+        return res.status(403).json({ message: 'You are not a member of this chat' });
+      }
+  
+      // Add the message to the chat
+      if (!chat.messages) {
+        chat.messages = [newMessage];
+      } else {
+        chat.messages.push(newMessage);
+      }
+      await chat.save();
+  
+      // Emit the new message to all members of the chat
+      req.io.to(req.params.chatId).emit('newMessage', newMessage);
+  
       res.status(201).json(newMessage);
-  } catch (error) {
-    next(error);
-  }
-});
+    } catch (error) {
+      next(error);
+    }
+  });
+  
 
 // // PUT /messages/:id endpoint to update an existing message
 // messagesRouter.put('/:id', async (req, res, next) => {

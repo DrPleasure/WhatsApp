@@ -4,18 +4,18 @@ const { Schema, model } = mongoose;
 
 const messageSchema = new Schema(
   {
-    sender: 
-    {
-        type: mongoose.Types.ObjectId,
-    ref: 'User'
-},
-    content: { 
-        text: {type: String, required: true},
-        media: {type: String, required: false}
+    sender: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    content: {
+      text: { type: String, required: true },
+      media: { type: String, required: false }
     }
   },
   { timestamps: true }
 );
 
+const Message = model("Message", messageSchema);
 
-export default messageSchema;
+export default Message;

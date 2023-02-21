@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { body } from "express-validator"
 
 export const createAccessToken = (payload) =>
   new Promise((resolve, reject) =>
@@ -20,3 +21,17 @@ export const verifyAccessToken = (token) =>
       else resolve(originalPayload);
     })
   );
+
+  // Validator middleware for the request body
+export const validate = (method) => {
+  switch (method) {
+    case 'createMessage': {
+      return [
+        body('content').exists().notEmpty().withMessage('Content is a required field'),
+      ];
+    }
+    default: {
+      return [];
+    }
+  }
+};
