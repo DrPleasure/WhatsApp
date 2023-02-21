@@ -34,7 +34,7 @@ usersSchema.methods.toJSON = function () {
   return user;
 };
 
-usersSchema.static("checkCredentials", async function (email, password) {
+usersSchema.statics.findByCredentials = async function (email, password) {
   const user = await this.findOne({ email });
   if (user) {
     const passwordMatch = await bcrypt.compare(password, user.password);
@@ -44,6 +44,6 @@ usersSchema.static("checkCredentials", async function (email, password) {
       return null;
     }
   }
-});
-
-export default model("User", usersSchema);
+};
+const userModel = mongoose.model("User", usersSchema);
+export default userModel;

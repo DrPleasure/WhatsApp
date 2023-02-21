@@ -23,7 +23,8 @@ usersRouter.post("/register", async (req, res, next) => {
 usersRouter.post("/login", async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const user = await userModel.checkCredentails(email, password);
+    console.log(req.body);
+    const user = await userModel.findByCredentials(email, password);
     if (user) {
       const payload = { _id: user._id, role: user.role };
       const accessToken = await createAccessToken(payload);
@@ -58,14 +59,16 @@ usersRouter.get("/:userId", async (req, res, next) => {
       res.status(200).json(user);
     } else {
       next(
-        createHttpError(404, `user with id ${req.params.userId} does not exist!`)
+        createHttpError(
+          404,
+          `user with id ${req.params.userId} does not exist!`
+        )
       );
     }
   } catch (error) {
     next(error);
   }
 });
-
 
 usersRouter.put("/me", JWTAuthMiddleware, async (req, res, next) => {
   try {
@@ -107,13 +110,18 @@ usersRouter.get(
   adminOnlyMiddleware,
   async (req, res, next) => {
     try {
-      mongoQuery = q2m(req.query);
+      const mongoQuery = q2m(req.query);
       const total = await userModel.countDocuments(mongoQuery.criteria);
       const users = await userModel
         .find(mongoQuery.criteria, mongoQuery.options.fields)
         .limit(mongoQuery.options.limit)
         .skip(mongoQuery.options.skip)
         .sort(mongoQuery.options.sort);
+      if (users) {
+        res.send(users);
+      } else {
+        res.status(404);
+      }
     } catch (error) {
       next(error);
     }
