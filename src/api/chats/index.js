@@ -71,34 +71,29 @@ chatsRouter.get('/', JWTAuthMiddleware, async (req, res, next) => {
   // GET /chats/:id endpoint to retrieve a specific chat by ID
   chatsRouter.get("/:chatId", JWTAuthMiddleware, async (req, res, next) => {
     try {
-        const chats = await chatModel.find({ members: req.user._id }).populate('members').populate({
-            path: 'messages.sender',
-            select: '_id userName',
-          }).populate({
-            path: 'messages.content',
-            select: '_id text media',
-          });
+      const chat = await chatModel
+        .findOne({ _id: req.params.chatId, members: req.user._id })
+        .populate("members")
+        .populate({
+          path: "messages.sender",
+          select: "_id name",
+        })
+        .populate({
+          path: "messages.content",
+          select: "_id text media",
+        });
   
       // Check if the chat exists
-      if (!chats) {
+      if (!chat) {
         return res.status(404).json({ message: "Chat not found" });
       }
   
-      // Check if the user is a member of the chat
-      const isMember = chats.members.some((member) =>
-        member._id.equals(req.user._id)
-      );
-      if (!isMember) {
-        return res
-          .status(403)
-          .json({ message: "You are not a member of this chat" });
-      }
-  
-      res.json(chats);
+      res.json(chat);
     } catch (error) {
       next(error);
     }
   });
+  
   
   
 
