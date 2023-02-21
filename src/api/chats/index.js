@@ -5,6 +5,7 @@ import q2m from "query-to-mongo";
 import { adminOnlyMiddleware } from "../../lib/adminOnly.js";
 import { JWTAuthMiddleware } from "../../lib/jwtAuth.js";
 import { createAccessToken } from "../../lib/tools.js";
+import userModel from "../users/model.js"
 
 const chatsRouter = express.Router();
 
@@ -19,40 +20,53 @@ chatsRouter.get('/', JWTAuthMiddleware, async (req, res, next) => {
   });
   
   // POST /chats endpoint to create a new chat for the authenticated user
-  chatsRouter.post('/', JWTAuthMiddleware, async (req, res, next) => {
+  chatsRouter.post("/", JWTAuthMiddleware, async (req, res, next) => {
     try {
-      const recipient = req.body.recipient;
-      const sender = req.user._id;
+      const { recipients } = req.body;
+      const userId = req.user._id;
+      const memberIds = [userId];
+      let members = [userId];
   
-      // Check if chat with recipient already exists
-      const existingChat = await chatModel.findOne({
-        members: { $all: [sender, recipient] }
-      }).exec();
-  
-      if (existingChat) {
-        res.status(200).json(existingChat);
+      if (recipients && Array.isArray(recipients)) {
+        for (let recipient of recipients) {
+          const existingRecipient = await userModel.findById(recipient);
+          if (!existingRecipient) {
+            throw createHttpError(404, `User with id ${recipient} not found`);
+          }
+          if (existingRecipient._id.toString() === userId.toString()) {
+            throw createHttpError(
+              400,
+              `User with id ${userId} cannot create a chat with themselves`
+            );
+          }
+          memberIds.push(recipient);
+          members.push(existingRecipient);
+        }
       } else {
-        // Create new chat with recipient
-        const newChat = new chatModel({
-          members: [sender, recipient],
-          messages: []
-        });
-        const savedChat = await newChat.save();
-  
-        // Join chat room with sockets
-        const chatRoom = `chat_${savedChat._id}`;
-        socketio.Socket.in(chatRoom).emit('message', {
-          type: 'info',
-          message: 'User joined chat room'
-        });
-        socketio.Socket.connected[socketio.id].join(chatRoom);
-  
-        res.status(201).json(savedChat);
+        throw createHttpError(400, "Please provide an array of recipients");
       }
+  
+      const existingChat = await chatModel.findOne({
+        members: { $all: memberIds },
+      });
+      if (existingChat) {
+        throw createHttpError(
+          400,
+          `Chat with members ${memberIds} already exists`
+        );
+      }
+  
+      const newChat = new chatModel({ members, messages: [] });
+      const savedChat = await newChat.save();
+      res.status(201).send(savedChat);
     } catch (error) {
       next(error);
     }
   });
+  
+  
+  
+  
   
 
 
