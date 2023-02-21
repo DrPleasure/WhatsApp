@@ -67,15 +67,13 @@ chatsRouter.get('/', JWTAuthMiddleware, async (req, res, next) => {
   
   
   
-  
-
 
   // GET /chats/:id endpoint to retrieve a specific chat by ID
   chatsRouter.get("/:chatId", JWTAuthMiddleware, async (req, res, next) => {
     try {
         const chats = await chatModel.find({ members: req.user._id }).populate('members').populate({
             path: 'messages.sender',
-            select: '_id name',
+            select: '_id userName',
           }).populate({
             path: 'messages.content',
             select: '_id text media',
