@@ -1,6 +1,6 @@
 import GoogleStrategy from "passport-google-oauth20";
-import UsersModel from "../../apis/users/model.js";
-import { createAccessToken } from "./jwtTools.js";
+import userModel from "../api/users/model.js";
+import { createAccessToken } from "./tools.js";
 
 const googleStrategy = new GoogleStrategy(
   {
@@ -10,18 +10,17 @@ const googleStrategy = new GoogleStrategy(
   },
   async (_, __, profile, passportNext) => {
     try {
-      const { email, given_name, family_name } = profile._json;
+      const { email, given_userName } = profile._json;
 
-      const user = await UsersModel.findOne({ email });
+      const user = await userModel.findOne({ email });
       if (user) {
         const accessToken = await createAccessToken({
           _id: user._id,
         });
         passportNext(null, { accessToken });
       } else {
-        const newUser = new UsersModel({
-          name: given_name,
-          lastName: family_name,
+        const newUser = new userModel({
+          name: given_userName,
           email,
           googleId: profile.id,
         });

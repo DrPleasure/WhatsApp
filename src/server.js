@@ -20,7 +20,7 @@ import { createServer } from "http"; // CORE MODULE
 dotenv.config();
 const server = express();
 const port = process.env.PORT || 3001;
-
+passport.use("google", googleStrategy);
 // Initialize socketio
 const httpServer = createServer(server);
 const io = new Server(httpServer);
@@ -52,7 +52,7 @@ server.use((req, res, next) => {
 server.use("/users", usersRouter);
 server.use("/chats", chatsRouter);
 server.use("/messages", messagesRouter);
-expressServer.use(passport.initialize());
+server.use(passport.initialize());
 
 server.use(badRequestHandler);
 server.use(unauthorizedHandler);

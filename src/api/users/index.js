@@ -5,7 +5,7 @@ import q2m from "query-to-mongo";
 import { adminOnlyMiddleware } from "../../lib/adminOnly.js";
 import { JWTAuthMiddleware } from "../../lib/jwtAuth.js";
 import { createAccessToken } from "../../lib/tools.js";
-
+import passport from "passport";
 const usersRouter = express.Router();
 
 usersRouter.post("/register", async (req, res, next) => {
@@ -125,6 +125,19 @@ usersRouter.get(
     } catch (error) {
       next(error);
     }
+  }
+);
+
+usersRouter.get(
+  "/googleLogin",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+usersRouter.get(
+  "/googleRedirect",
+  passport.authenticate("google", { session: false }),
+  async (req, res, next) => {
+    res.redirect(`${process.env.FE_URL}/?accessToken=${req.user.accessToken}`);
   }
 );
 
