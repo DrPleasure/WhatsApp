@@ -7,19 +7,9 @@ import { adminOnlyMiddleware } from "../../lib/adminOnly.js";
 import { JWTAuthMiddleware } from "../../lib/jwtAuth.js";
 import { createAccessToken } from "../../lib/tools.js";
 import passport from "passport";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
-import { v2 as cloudinary } from "cloudinary";
-const usersRouter = express.Router();
 
-const cloudinaryUploader = multer({
-  storage: new CloudinaryStorage({
-    cloudinary,
-    params: {
-      format: "jpeg",
-      folder: "Timmy gay",
-    },
-  }),
-}).single("ns");
+import { cloudinaryUpload } from "../../lib/upload.js";
+const usersRouter = express.Router();
 
 usersRouter.post("/register", async (req, res, next) => {
   try {
@@ -120,7 +110,7 @@ usersRouter.delete("/me", JWTAuthMiddleware, async (req, res, next) => {
 usersRouter.post(
   "/me/avatar",
   JWTAuthMiddleware,
-  cloudinaryUploader,
+  cloudinaryUpload,
   async (req, res, next) => {
     try {
       //we get from req.body the picture we want to upload
