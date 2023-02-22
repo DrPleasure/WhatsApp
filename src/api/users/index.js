@@ -29,9 +29,11 @@ usersRouter.post("/login", async (req, res, next) => {
     console.log(req.body);
     const user = await userModel.findByCredentials(email, password);
     if (user) {
-      const payload = { _id: user._id, role: user.role };
+      const payload = { _id: user._id, password: user.password };
+      console.log(payload);
       const accessToken = await createAccessToken(payload);
-      res.send({ accessToken });
+      console.log(user);
+      res.send({ accessToken, user });
     } else {
       next(createHttpError(401, "Bad credentials!"));
     }
