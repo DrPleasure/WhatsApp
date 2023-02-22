@@ -75,10 +75,11 @@ chatsRouter.get('/', JWTAuthMiddleware, async (req, res, next) => {
     try {
       const chat = await chatModel
         .findOne({ _id: req.params.chatId, members: req.user._id })
-        .populate("members")    
-        .populate(
-         "messages"         
-        ).exec()
+         .populate({
+          path:"members", select:"userName avatar email" })    
+         .populate({
+          path:"messages", populate:{path:"sender", select:"userName avatar email", }}       
+         )
   
       // Check if the chat exists
       if (!chat) {

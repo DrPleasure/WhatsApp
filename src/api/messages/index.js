@@ -55,7 +55,7 @@ messagesRouter.post('/:chatId', JWTAuthMiddleware, async (req, res, next) => {
         content,
       });
   
-      const chat = await chatModel.findById(req.params.chatId).populate('members');
+      const chat = await chatModel.findById(req.params.chatId)
   
       // Check if the chat exists
       if (!chat) {
@@ -63,7 +63,7 @@ messagesRouter.post('/:chatId', JWTAuthMiddleware, async (req, res, next) => {
       }
   
       // Check if the user is a member of the chat
-      const isMember = chat.members.some((member) => member._id.equals(sender));
+      const isMember = chat.members.some((id) => id.equals(sender));
       if (!isMember) {
         return res.status(403).json({ message: 'You are not a member of this chat' });
       }
@@ -74,6 +74,8 @@ messagesRouter.post('/:chatId', JWTAuthMiddleware, async (req, res, next) => {
       } else {
         chat.messages.push(newMessage);
       }
+
+      await newMessage.save()
       await chat.save();
   
       // Emit the new message to all members of the chat
