@@ -12,6 +12,8 @@ import usersRouter from "./api/users/index.js";
 import chatsRouter from "./api/chats/index.js";
 import messagesRouter from "./api/messages/index.js";
 import mongoose from "mongoose";
+import passport from "passport";
+import googleStrategy from "./lib/google.js";
 import dotenv from "dotenv";
 import { Server } from "socket.io";
 import { createServer } from "http"; // CORE MODULE
@@ -50,6 +52,7 @@ server.use((req, res, next) => {
 server.use("/users", usersRouter);
 server.use("/chats", chatsRouter);
 server.use("/messages", messagesRouter);
+expressServer.use(passport.initialize());
 
 server.use(badRequestHandler);
 server.use(unauthorizedHandler);
