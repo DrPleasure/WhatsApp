@@ -2,11 +2,24 @@ import express from "express";
 import createHttpError from "http-errors";
 import userModel from "./model.js";
 import q2m from "query-to-mongo";
+import multer from "multer";
 import { adminOnlyMiddleware } from "../../lib/adminOnly.js";
 import { JWTAuthMiddleware } from "../../lib/jwtAuth.js";
 import { createAccessToken } from "../../lib/tools.js";
 import passport from "passport";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import { v2 as cloudinary } from "cloudinary";
 const usersRouter = express.Router();
+
+const cloudinaryUploader = multer({
+  storage: new CloudinaryStorage({
+    cloudinary,
+    params: {
+      format: "jpeg",
+      folder: "Timmy gay",
+    },
+  }),
+}).single("ns");
 
 usersRouter.post("/register", async (req, res, next) => {
   try {
@@ -103,6 +116,31 @@ usersRouter.delete("/me", JWTAuthMiddleware, async (req, res, next) => {
     next(error);
   }
 });
+
+usersRouter.post(
+  "/me/avatar",
+  JWTAuthMiddleware,
+  cloudinaryUploader,
+  async (req, res, next) => {
+    try {
+      //we get from req.body the picture we want to upload
+
+      console.log("ID: ", req.user._id);
+      const updatedUser = await userModel.findByIdAndUpdate(
+        req.user._id,
+        { avatar: req.file.path },
+        { new: true, runValidators: true }
+      );
+      if (updatedUser) {
+        res.status(204).send(updatedUser);
+      } else {
+        next(createHttpError(404, `User with id ${req.user._id} not found`));
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 usersRouter.get(
   "/",
