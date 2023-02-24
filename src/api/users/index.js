@@ -137,10 +137,12 @@ usersRouter.post(
 usersRouter.get(
   "/",
   JWTAuthMiddleware,
-  adminOnlyMiddleware,
   async (req, res, next) => {
     try {
       const mongoQuery = q2m(req.query);
+      // Adding a filter on the userName field to search for partial matches
+      const regex = new RegExp(req.query.userName, "i");
+      mongoQuery.criteria.userName = { $regex: regex };
       const total = await userModel.countDocuments(mongoQuery.criteria);
       const users = await userModel
         .find(mongoQuery.criteria, mongoQuery.options.fields)
@@ -157,6 +159,7 @@ usersRouter.get(
     }
   }
 );
+
 
 usersRouter.get(
   "/googleLogin",
