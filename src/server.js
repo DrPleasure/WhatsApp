@@ -1,6 +1,7 @@
 import express from "express";
 import listEndpoints from "express-list-endpoints";
 import cors from "cors";
+
 import {
   badRequestHandler,
   genericServerErrorHandler,
@@ -17,15 +18,19 @@ import googleStrategy from "./lib/google.js";
 import dotenv from "dotenv";
 import { Server } from "socket.io";
 import { createServer } from "http"; // CORE MODULE
-import { newConnectionhandler } from "./socket/index.js";
+import { newConnectionHandler } from "./socket/index.js";
+
 dotenv.config();
 const server = express();
 const port = process.env.PORT || 3001;
 passport.use("google", googleStrategy);
+
+
 // Initialize socketio
 const httpServer = createServer(server);
 const io = new Server(httpServer);
-io.on("connection", newConnectionhandler);
+io.on("connection", newConnectionHandler);
+
 io.on("connection", (socket) => {
   console.log("Socket connected: " + socket.id);
 

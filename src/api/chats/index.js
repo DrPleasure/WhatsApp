@@ -11,15 +11,18 @@ const chatModel = Chat;
 
 const chatsRouter = express.Router();
 
-// GET /chats endpoint to retrieve all chats for the authenticated user
 chatsRouter.get('/', JWTAuthMiddleware, async (req, res, next) => {
-    try {
-      const userChats = await chatModel.find({ members: req.user._id }).exec();
-      res.status(200).json(userChats);
-    } catch (error) {
-      next(error);
-    }
-  });
+  try {
+    const userChats = await chatModel.find(
+      { members: req.user._id },
+      { messages: 0 } // exclude the messages field
+    ).exec();
+    res.status(200).json(userChats);
+  } catch (error) {
+    next(error);
+  }
+});
+
   
   // POST /chats endpoint to create a new chat for the authenticated user
   chatsRouter.post("/", JWTAuthMiddleware, async (req, res, next) => {
